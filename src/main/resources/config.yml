@@ -13,6 +13,7 @@ Settings:
   DisableCommandFeedback: true
   ShowCoordinatesWhenEggFoundInProgressInventory: false
   ArmorstandGlow: 10
+  ShowFireworkAfterEggFound: true
   ShowEggsNearbyMessageRadius: 10
   RewardInventoryMaterial: PAPER
   PluginPrefixEnabled: true

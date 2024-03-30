@@ -3,17 +3,14 @@ package de.theredend2000.advancedegghunt.configurations;
 import com.cryptomorin.xseries.XMaterial;
 import com.cryptomorin.xseries.XSound;
 import com.cryptomorin.xseries.particles.XParticle;
-import de.theredend2000.advancedegghunt.Main;
+import de.theredend2000.advancedegghunt.util.XHelper;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 
 public class PluginConfig extends Configuration {
     private static TreeMap<Double, ConfigUpgrader> upgraders = new TreeMap<>();
@@ -130,10 +127,6 @@ public class PluginConfig extends Configuration {
 		getConfig().set("Settings.ShowEggsNearbyMessageRadius", ShowEggsNearbyMessageRadius);
 	}
 
-    public XMaterial getRewardInventoryMaterial() {
-        return Main.getMaterial(getConfig().getString("Settings.RewardInventoryMaterial"));
-    }
-
     public boolean getPluginPrefixEnabled() {
         return getConfig().getBoolean("Settings.PluginPrefixEnabled");
     }
@@ -169,6 +162,13 @@ public class PluginConfig extends Configuration {
 		getConfig().set("Settings.HintCooldownSeconds", HintCooldownSeconds);
 	}
 
+    public Boolean getHintApplyCooldownOnFail() {
+        return getConfig().getBoolean("Settings.HintApplyCooldownOnFail");
+    }
+    public void setHintApplyCooldownOnFails(Boolean HintApplyCooldownOnFail) {
+        getConfig().set("Settings.HintApplyCooldownOnFail", HintApplyCooldownOnFail);
+    }
+
     public Integer getHintUpdateTime() {
         return getConfig().getInt("Settings.HintUpdateTime");
     }
@@ -180,56 +180,56 @@ public class PluginConfig extends Configuration {
 
     //region Sounds
     public Sound getPlayerFindEggSound() {
-        return XSound.valueOf(getConfig().getString("Sounds.PlayerFindEggSound")).parseSound();
+        return XHelper.ParseSound(getConfig().getString("Sounds.PlayerFindEggSound"), XSound.ENTITY_PLAYER_LEVELUP).parseSound();
     }
 	public void setPlayerFindEggSound(XMaterial PlayerFindEggSound) {
 		getConfig().set("Sounds.PlayerFindEggSound", PlayerFindEggSound.toString());
 	}
 
     public Sound getEggAlreadyFoundSound() {
-        return XSound.valueOf(getConfig().getString("Sounds.EggAlreadyFoundSound")).parseSound();
+        return XHelper.ParseSound(getConfig().getString("Sounds.EggAlreadyFoundSound"), XSound.ENTITY_VILLAGER_NO).parseSound();
     }
 	public void setEggAlreadyFoundSound(XMaterial EggAlreadyFoundSound) {
 		getConfig().set("Sounds.EggAlreadyFoundSound", EggAlreadyFoundSound.toString());
 	}
 
     public Sound getAllEggsFoundSound() {
-        return XSound.valueOf(getConfig().getString("Sounds.AllEggsFoundSound")).parseSound();
+        return XHelper.ParseSound(getConfig().getString("Sounds.AllEggsFoundSound"), XSound.ENTITY_ENDER_DRAGON_DEATH).parseSound();
     }
 	public void setAllEggsFoundSound(XMaterial AllEggsFoundSound) {
 		getConfig().set("Sounds.AllEggsFoundSound", AllEggsFoundSound.toString());
 	}
 
     public Sound getEggBreakSound() {
-        return XSound.valueOf(getConfig().getString("Sounds.EggBreakSound")).parseSound();
+        return XHelper.ParseSound(getConfig().getString("Sounds.EggBreakSound"), XSound.BLOCK_NOTE_BLOCK_BELL).parseSound();
     }
 	public void setEggBreakSound(XMaterial EggBreakSound) {
 		getConfig().set("Sounds.EggBreakSound", EggBreakSound.toString());
 	}
 
     public Sound getEggPlaceSound() {
-        return XSound.valueOf(getConfig().getString("Sounds.EggPlaceSound")).parseSound();
+        return XHelper.ParseSound(getConfig().getString("Sounds.EggPlaceSound"), XSound.BLOCK_NOTE_BLOCK_BELL).parseSound();
     }
 	public void setEggPlaceSound(XMaterial EggPlaceSound) {
 		getConfig().set("Sounds.EggPlaceSound", EggPlaceSound.toString());
 	}
 
     public Sound getErrorSound() {
-        return XSound.valueOf(getConfig().getString("Sounds.ErrorSound")).parseSound();
+        return XHelper.ParseSound(getConfig().getString("Sounds.ErrorSound"), XSound.BLOCK_NOTE_BLOCK_BASEDRUM).parseSound();
     }
 	public void setErrorSound(XMaterial ErrorSound) {
 		getConfig().set("Sounds.ErrorSound", ErrorSound.toString());
 	}
 
     public Sound getInventoryClickSuccess() {
-        return XSound.valueOf(getConfig().getString("Sounds.InventoryClickSuccess")).parseSound();
+        return XHelper.ParseSound(getConfig().getString("Sounds.InventoryClickSuccess"), XSound.BLOCK_NOTE_BLOCK_CHIME).parseSound();
     }
 	public void setInventoryClickSuccess(XMaterial InventoryClickSuccess) {
 		getConfig().set("Sounds.InventoryClickSuccess", InventoryClickSuccess.toString());
 	}
 
     public Sound getInventoryClickFailed() {
-        return XSound.valueOf(getConfig().getString("Sounds.InventoryClickFailed")).parseSound();
+        return XHelper.ParseSound(getConfig().getString("Sounds.InventoryClickFailed"), XSound.BLOCK_NOTE_BLOCK_HAT).parseSound();
     }
 	public void setInventoryClickFailed(XMaterial InventoryClickFailed) {
 		getConfig().set("Sounds.InventoryClickFailed", InventoryClickFailed.toString());
@@ -247,7 +247,7 @@ public class PluginConfig extends Configuration {
 
     @Nullable
     public Particle getEggFoundParticle() {
-        return XParticle.getParticle(getConfig().getString("Particle.type.EggFound", "CRIT"));
+        return XHelper.ParseParticle(getConfig().getString("Particle.type.EggFound", "CRIT"), XParticle.getParticle("CRIT"));
     }
 	public void setEggFoundParticle(Particle EggFoundParticle) {
 		getConfig().set("Particle.type.EggFound", EggFoundParticle.toString());
@@ -255,7 +255,7 @@ public class PluginConfig extends Configuration {
 
     @Nullable
     public Particle getEggNotFoundParticle() {
-        return XParticle.getParticle(getConfig().getString("Particle.type.EggNotFound", "VILLAGER_HAPPY"));
+        return XHelper.ParseParticle(getConfig().getString("Particle.type.EggNotFound", "VILLAGER_HAPPY"), XParticle.getParticle("VILLAGER_HAPPY"));
     }
 	public void setEggNotFoundParticle(Particle EggNotFoundParticle) {
 		getConfig().set("Particle.type.EggNotFound", EggNotFoundParticle.toString());
@@ -331,9 +331,29 @@ public class PluginConfig extends Configuration {
         return getConfig().getString("Presets.DefaultGlobalPresetLoad");
     }
 
+    public boolean isCommandBlacklisted(String command){
+        return getConfig().getStringList("BlacklistedCommands").contains(command.split(" ")[0]);
+    }
+
     @Override
     public void registerUpgrader() {
-
+        upgraders.put(3.1, (oldConfig, NewConfig) -> {
+            List<String> blacklistedCommands  = NewConfig.getStringList("BlacklistedCommands");
+            LinkedHashSet<String> blacklistedCommandsSet = new LinkedHashSet<String>(blacklistedCommands);
+            blacklistedCommandsSet.add("restart");
+            blacklistedCommandsSet.add("minecraft:restart");
+            blacklistedCommandsSet.add("execute");
+            blacklistedCommandsSet.add("minecraft:execute");
+            blacklistedCommandsSet.add("setblock");
+            blacklistedCommandsSet.add("minecraft:setblock");
+            blacklistedCommandsSet.add("fill");
+            blacklistedCommandsSet.add("minecraft:fill");
+            blacklistedCommandsSet.add("reload");
+            blacklistedCommandsSet.add("minecraft:reload");
+            blacklistedCommandsSet.add("rl");
+            blacklistedCommandsSet.add("minecraft:rl");
+            NewConfig.set("BlacklistedCommands", new ArrayList<>(blacklistedCommandsSet));
+        });
     }
 
     //Downloader

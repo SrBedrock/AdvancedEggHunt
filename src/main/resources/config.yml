@@ -1,4 +1,4 @@
-config-version: 2.9
+config-version: 3.2
 
 # Change the language
 # Available: en (English) | de (German) | fr (France) | vn (Vietnamese) | bn (Bangla, Bengali)
@@ -7,9 +7,9 @@ messages-lang: en
 #Auto download
 Download:
   # Will be downloaded if a new plugin version is out (Not working rn)
-  AdvancedEggHunt: true
+  AdvancedEggHunt: false
   # Will download for the plugin to work (This should not be disabled)
-  NBT-API: true
+  NBT-API: false
 
 prefix: '&f[&eAdvancedEggHunt&f] &r'
 
@@ -57,6 +57,8 @@ Settings:
   # How long the update in the hint inventory is ( in ticks )
   HintUpdateTime: 20
 
+  # If the cooldown should be applied to the hint command on a failed attempt
+  HintApplyCooldownOnFail: true
 
 Presets:
 
@@ -91,6 +93,30 @@ PlaceholderAPI:
   name: 'N/A'
   # Replacement if the count is null
   count: '-1'
+
+
+# Add commands that cant be executed by the plugin
+BlacklistedCommands:
+  - op
+  - minecraft:op
+  - kill
+  - minecraft:kill
+  - summon
+  - minecraft:summon
+  - stop
+  - minecraft:stop
+  - restart
+  - minecraft:restart
+  - execute
+  - minecraft:execute
+  - setblock
+  - minecraft:setblock
+  - fill
+  - minecraft:fill
+  - reload
+  - minecraft:reload
+  - rl
+  - minecraft:rl
 
 
 PlaceEggs:

@@ -135,6 +135,9 @@ public final class Main extends JavaPlugin {
         new PlayerChatEventListener();
         new PlayerConnectionListener();
         new EntityChangeListener();
+        if (Bukkit.getPluginManager().isPluginEnabled("Oraxen")) {
+            new OraxenFurniturePlaceEventListener();
+        }
     }
 
     private void giveAllItemsBack(){

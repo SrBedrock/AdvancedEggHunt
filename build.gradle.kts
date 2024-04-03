@@ -51,7 +51,7 @@ dependencies {
 }
 
 group = "de.theredend2000"
-version = "v3.0.3"
+version = "3.0.4"
 description = "AdvancedEggHunt"
 
 java {

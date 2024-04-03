@@ -8,7 +8,6 @@ import de.theredend2000.advancedegghunt.util.ItemBuilder;
 import de.theredend2000.advancedegghunt.util.PlayerMenuUtility;
 import de.theredend2000.advancedegghunt.util.enums.LeaderboardSortTypes;
 import de.theredend2000.advancedegghunt.util.messages.MessageKey;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -18,6 +17,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import java.util.*;
 
 public class LeaderboardMenu extends PaginatedInventoryMenu {
+    private int numberOfPlayers = 0;
 
     public LeaderboardMenu(PlayerMenuUtility playerMenuUtility) {
         super(playerMenuUtility, "Eggs leaderboard", (short) 54);
@@ -27,10 +27,16 @@ public class LeaderboardMenu extends PaginatedInventoryMenu {
     }
 
     public void open() {
+        page = 0;
         getInventory().setContents(inventoryContent);
         setMenuItems();
 
         playerMenuUtility.getOwner().openInventory(getInventory());
+    }
+
+    public void reopen() {
+        getInventory().setContents(inventoryContent);
+        setMenuItems();
     }
 
     public void addMenuBorderButtons() {
@@ -52,8 +58,6 @@ public class LeaderboardMenu extends PaginatedInventoryMenu {
 
         String collection = Main.getInstance().getEggManager().getEggCollectionFromPlayerData(playerMenuUtility.getOwner().getUniqueId());
         addMenuBorderButtons();
-        ArrayList<String> keys = new ArrayList<>();
-        HashMap<String, Integer> leaderboard = new HashMap<>();
 
         LeaderboardSortTypes sortTypes = Main.getInstance().getSortTypeLeaderboard().get(playerMenuUtility.getOwner());
         ItemBuilder itemBuilder = new ItemBuilder(XMaterial.HOPPER).setDisplayname("§2Sort");
@@ -78,62 +82,77 @@ public class LeaderboardMenu extends PaginatedInventoryMenu {
             return;
         }
 
+        HashMap<String, Integer> leaderboard = new HashMap<>();
+
         for(UUID uuid : Main.getInstance().getEggDataManager().savedPlayers()) {
             FileConfiguration playerConfig = Main.getInstance().getPlayerEggDataManager().getPlayerData(uuid);
-            if (!playerConfig.contains("FoundEggs")) continue;
+            if (!playerConfig.contains("FoundEggs") || !playerConfig.contains("FoundEggs." + collection)) continue;
 
             leaderboard.put(playerConfig.getString("FoundEggs." + collection + ".Name"), playerConfig.getInt("FoundEggs." + collection + ".Count"));
         }
 
-        for(int i = 0; i < leaderboard.size(); i++)
-            keys.add(String.valueOf(i));
-
-        if (keys.isEmpty()) {
-            getInventory().setItem(22, new ItemBuilder(XMaterial.RED_STAINED_GLASS).setDisplayname("§4§lNo Player").setLore("§7There are no players in the leaderboard.").build());
-            return;
-        }
-
         List<Map.Entry<String, Integer>> leaderList = new ArrayList<>(leaderboard.entrySet());
+        numberOfPlayers = leaderList.size();
+
         if (leaderList.isEmpty()) {
             getInventory().setItem(22, new ItemBuilder(XMaterial.RED_STAINED_GLASS).setDisplayname("§4§lNo Player").setLore("§7There are no players in the leaderboard.").build());
             return;
         }
 
-        for(int i = 0; i < getMaxItemsPerPage(); i++) {
-            index = getMaxItemsPerPage() * page + i;
-            if(index >= keys.size()) break;
-            if (keys.get(index) == null) {
-                continue;
+        leaderList.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+        int maxEggs = Main.getInstance().getEggManager().getMaxEggs(collection);
+
+        if (sortTypes.equals(LeaderboardSortTypes.YOU)) {
+            index = 0;
+            numberOfPlayers = 1;
+
+            for(int i = 0; i < leaderboard.size(); i++) {
+                String playerName = leaderList.get(i).getKey();
+                if (!playerName.equals(playerMenuUtility.getOwner().getName())) {
+                    continue;
+                }
+
+                int count = leaderList.get(i).getValue();
+                getInventory().addItem(new ItemBuilder(XMaterial.PLAYER_HEAD)
+                        .setOwner(playerName)
+                        .setDisplayname("§6§l" + (i + 1) + "§6th §2§n" + playerName + (playerName.equals(playerMenuUtility.getOwner().getName()) ? "§r §a§lYOU" : ""))
+                        .setLore("", "§7Eggs Found: §3" + count, "§7Eggs Remaining: §3" + (maxEggs - count), "§7Max Eggs: §3" + maxEggs, "", 9 >= index ? "§eTHIS PLAYER IS IN THE TOP 10!" : "§c" + (index - 9) + " place behind 10th place").build());
+
+                return;
             }
+            getInventory().setItem(22, new ItemBuilder(XMaterial.RED_STAINED_GLASS).setDisplayname("§4§lNo Player").setLore("§7There are no players in the leaderboard.").build());
+            return;
+        }
+
+        for(int i = 0; i < getMaxItemsPerPage(); i++) {
+            index = (getMaxItemsPerPage() * page) + i;
+            if(index >= leaderboard.size()) break;
             int slotIndex = ((9 + 1) + ((i / 7) * 9) + (i % 7));
 
-            leaderList.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
-            String playerName = leaderList.get(i).getKey();
-            int count = leaderList.get(i).getValue();
-            int maxEggs = Main.getInstance().getEggManager().getMaxEggs(collection);
+            String playerName = leaderList.get(index).getKey();
+            int count = leaderList.get(index).getValue();
+
             switch (sortTypes) {
                 case ALL:
                     getInventory().setItem(slotIndex, new ItemBuilder(XMaterial.PLAYER_HEAD).setOwner(playerName)
-                            .setDisplayname("§6§l" + (i + 1) + "§6th §2§n" + playerName + (playerName.equals(playerMenuUtility.getOwner().getName()) ? "§r §a§lYOU" : ""))
-                            .setLore("", "§7Eggs Found: §3" + count, "§7Eggs Remaining: §3" + (maxEggs - count), "§7Max Eggs: §3" + maxEggs, "", 9 >= i ? "§eTHIS PLAYER IS IN THE TOP 10!" : "§c" + (i - 9) + " place behind 10th place").build());
+                            .setDisplayname("§6§l" + (index + 1) + "§6th §2§n" + playerName + (playerName.equals(playerMenuUtility.getOwner().getName()) ? "§r §a§lYOU" : ""))
+                            .setLore("", "§7Eggs Found: §3" + count, "§7Eggs Remaining: §3" + (maxEggs - count), "§7Max Eggs: §3" + maxEggs, "", 9 >= index ? "§eTHIS PLAYER IS IN THE TOP 10!" : "§c" + (index - 9) + " place behind 10th place").build());
                     break;
                 case TOP3:
+                    numberOfPlayers = 3;
                     if (i < 3) {
                         getInventory().setItem(slotIndex, new ItemBuilder(XMaterial.PLAYER_HEAD).setOwner(playerName)
-                                .setDisplayname("§6§l" + (i + 1) + "§6th §2§n" + playerName + (playerName.equals(playerMenuUtility.getOwner().getName()) ? "§r §a§lYOU" : ""))
+                                .setDisplayname("§6§l" + (index + 1) + "§6th §2§n" + playerName + (playerName.equals(playerMenuUtility.getOwner().getName()) ? "§r §a§lYOU" : ""))
                                 .setLore("", "§7Eggs Found: §3" + count, "§7Eggs Remaining: §3" + (maxEggs - count), "§7Max Eggs: §3" + maxEggs, "", "§eTHIS PLAYER IS IN THE TOP 10!").build());
                     }
                     break;
                 case TOP10:
+                    numberOfPlayers = 10;
                     if (i < 10) {
                         getInventory().setItem(slotIndex, new ItemBuilder(XMaterial.PLAYER_HEAD).setOwner(playerName)
-                                .setDisplayname("§6§l" + (i + 1) + "§6th §2§n" + playerName + (playerName.equals(playerMenuUtility.getOwner().getName()) ? "§r §a§lYOU" : ""))
+                                .setDisplayname("§6§l" + (index + 1) + "§6th §2§n" + playerName + (playerName.equals(playerMenuUtility.getOwner().getName()) ? "§r §a§lYOU" : ""))
                                 .setLore("", "§7Eggs Found: §3" + count, "§7Eggs Remaining: §3" + (maxEggs - count), "§7Max Eggs: §3" + maxEggs, "", "§eTHIS PLAYER IS IN THE TOP 10!").build());
                     }
-                    break;
-                case YOU:
-                    if (playerName.equals(playerMenuUtility.getOwner().getName()))
-                        getInventory().setItem(slotIndex, new ItemBuilder(XMaterial.PLAYER_HEAD).setOwner(playerName).setDisplayname("§6§l" + (i + 1) + "§6th §2§n" + playerName + (playerName.equals(playerMenuUtility.getOwner().getName()) ? "§r §a§lYOU" : "")).setLore("", "§7Eggs Found: §3" + count, "§7Eggs Remaining: §3" + (maxEggs - count), "§7Max Eggs: §3" + maxEggs, "", 9 >= i ? "§eTHIS PLAYER IS IN THE TOP 10!" : "§c" + (i - 9) + " place behind 10th place").build());
                     break;
             }
         }
@@ -144,27 +163,21 @@ public class LeaderboardMenu extends PaginatedInventoryMenu {
     }
 
     public int getMaxPages(){
-        ArrayList<String> keys = new ArrayList<>();
         HashMap<String, Integer> leaderboard = new HashMap<>();
         if(Main.getInstance().getEggDataManager().savedPlayers() != null){
             for(UUID uuid : Main.getInstance().getEggDataManager().savedPlayers()) {
                 FileConfiguration playerConfig = Main.getInstance().getPlayerEggDataManager().getPlayerData(uuid);
                 leaderboard.put(playerConfig.getString("FoundEggs.Name"), playerConfig.getInt("FoundEggs.Count"));
             }
-            for(int i = 0; i < leaderboard.size(); i++)
-                keys.add(String.valueOf(i));
         }
-        if(keys.isEmpty()) return 1;
-        return (int) Math.ceil((double) keys.size() / getMaxItemsPerPage());
+        if(leaderboard.isEmpty()) return 1;
+        return (int) Math.ceil((double) leaderboard.size() / getMaxItemsPerPage());
     }
 
     @Override
     public void handleMenu(InventoryClickEvent event) {
         SoundManager soundManager = Main.getInstance().getSoundManager();
         Player player = (Player) event.getWhoClicked();
-        ArrayList<String> keys = new ArrayList<>();
-        for(UUID uuids : Main.getInstance().getEggDataManager().savedPlayers())
-            keys.add(String.valueOf(uuids));
 
         if(event.getCurrentItem().getType().equals(Material.PAPER) && ChatColor.stripColor(event.getCurrentItem().getItemMeta().getDisplayName()).equalsIgnoreCase("Selected Collection")){
             new CollectionSelectMenu(Main.getPlayerMenuUtility(player)).open();
@@ -196,13 +209,13 @@ public class LeaderboardMenu extends PaginatedInventoryMenu {
                         player.playSound(player.getLocation(), soundManager.playInventoryFailedSound(), soundManager.getSoundVolume(), 1);
                     } else {
                         page = page - 1;
-                        open();
+                        reopen();
                         player.playSound(player.getLocation(), soundManager.playInventorySuccessSound(), soundManager.getSoundVolume(), 1);
                     }
                 } else if (ChatColor.stripColor(event.getCurrentItem().getItemMeta().getDisplayName()).equalsIgnoreCase("Right")) {
-                    if (!((index + 1) >= keys.size())) {
+                    if (!((index + 1) >= numberOfPlayers)) {
                         page = page + 1;
-                        open();
+                        reopen();
                         player.playSound(player.getLocation(), soundManager.playInventorySuccessSound(), soundManager.getSoundVolume(), 1);
                     } else {
                         player.sendMessage(Main.getInstance().getMessageManager().getMessage(MessageKey.LAST_PAGE));
